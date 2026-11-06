@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151a22">
+<title>주성분 그림자극</title>
+<meta name="description" content="단위만 바꿨는데 첫 주성분이 바뀌었다? — 주성분 분석(PCA): 분산이라는 정보와 그림자, 공분산 행렬과 고유값 분해, 설명된 분산 비율과 스크리 그림, 단위와 표준화, 특잇값 분해로 계산하기, 붓꽃 데이터, PCA의 한계, 추천 시스템의 행렬 분해와 빈칸 평균을 손으로 체험하는 앱">
+<style>
+:root{--bg:#151a22;--card:#1c232e;--card2:#25303d;--fg:#eff3f8;--mut:#a3b0c2;--line:#33425a;
+--a:#7cc4ff;--b:#ff9b5c;--ok:#6fdc9a;--bad:#ff7d7d;--gold:#ffd166;--pur:#b79cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.55}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:12px 14px 40px}
+h1{font-size:1.2rem;margin:6px 0}
+h1 small{display:block;font-size:.76rem;color:var(--mut);font-weight:400}
+.tabs{display:flex;gap:5px;margin:10px 0}
+.tabs button{flex:1;padding:9px 2px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;font-size:.82rem;font-weight:600}
+.tabs button.on{background:#24406e;color:#fff;border-color:var(--a)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+h2{font-size:1rem;margin:2px 0 8px}
+.note{font-size:.86rem;color:var(--mut);margin:8px 0 0}
+.note b{color:var(--fg)}
+.btn{padding:11px 14px;border-radius:12px;border:0;background:linear-gradient(135deg,#2f6fd0,#7cc4ff);color:#fff;font-weight:800;font-size:.95rem;flex:1}
+.btn.sec{background:var(--card2);border:1px solid var(--line);color:var(--fg);font-weight:700}
+.btn.sm{flex:none;padding:7px 11px;font-size:.82rem}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:8px}
+.pill{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.84rem}
+.pill.on{border-color:var(--gold);background:#4a3e1a;color:#fff}
+.lbl{font-size:.8rem;color:var(--mut)}
+canvas{display:block;width:100%;border-radius:12px;background:#10141b;margin-top:8px;touch-action:none}
+.say{background:#16304c;border-left:3px solid var(--a);border-radius:8px;padding:9px 11px;font-size:.92rem;margin-top:10px}
+.say b{color:#fff}
+.say.q{border-left-color:var(--b);background:#2e2118}
+.res{margin-top:10px;font-size:.92rem;border-radius:10px;padding:10px 12px}
+.res.g{background:#16352a;border:1px solid #2f7a52}
+.res.r{background:#3a1d1d;border:1px solid #8a3a3a}
+.res.y{background:#3a3218;border:1px solid #8a7a3a}
+.code{background:#0f131a;border:1px solid #26324a;border-radius:10px;padding:9px 11px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.65;white-space:pre;overflow-x:auto;margin-top:8px}
+.code .k{color:#ff9bd2}.code .s{color:#a5e38a}.code .c{color:#6b7a90}.code .n{color:#ffd166}.code .f{color:#7cc4ff}
+.out{background:#0b0e13;border-radius:10px;padding:8px 11px;margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;white-space:pre-wrap;word-break:break-all}
+.out .p{color:#6b7a90}.out .o{color:#6fdc9a}.out .w{color:#ffd166}.out .e{color:#ff7d7d}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.opts button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.92rem}
+.opts button.right{border-color:#6fdc9a;background:#16352a}
+.opts button.wrong{border-color:#ff7d7d;background:#3a1d1d}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.stats div{background:var(--card2);border-radius:10px;padding:7px 6px;text-align:center;font-size:.74rem;color:var(--mut)}
+.stats div b{display:block;font-size:1.02rem;color:var(--fg);font-variant-numeric:tabular-nums}
+.sl{display:grid;grid-template-columns:84px 1fr 54px;gap:8px;align-items:center;font-size:.84rem;margin-top:6px}
+.sl b{text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%}
+input[type=text]{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#10141b;color:var(--fg);font-size:.92rem}
+.sum3{margin-top:12px;background:linear-gradient(135deg,#1d3358,#3a2a5a);border-radius:14px;padding:12px 14px}
+.sum3 ol{margin:4px 0;padding-left:20px;font-size:.92rem}
+.mine{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.mine div{display:flex;justify-content:space-between;gap:8px;background:var(--card2);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.mine button{border:0;background:none;color:var(--mut);font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:999px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:18px}
+footer a{color:var(--mut)}
+.tw{overflow-x:auto;margin-top:8px;border-radius:10px;border:1px solid #26324a}
+table.df{border-collapse:collapse;width:100%;font-size:.82rem;font-variant-numeric:tabular-nums;background:#0f131a}
+table.df th,table.df td{padding:6px 8px;text-align:center;border-bottom:1px solid #222b38}
+table.df thead th{background:#1a2230;color:#a3b0c2}
+.ax{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.ax button{padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.8rem}
+.mat{display:inline-grid;gap:2px 10px;padding:4px 8px;border-left:2px solid #6b7a90;border-right:2px solid #6b7a90;border-radius:4px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;text-align:right;vertical-align:middle}
+.mrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;font-size:.9rem}
+.rt{border-collapse:collapse;margin:8px auto 0;font-variant-numeric:tabular-nums}
+.rt th,.rt td{width:46px;height:38px;text-align:center;border:1px solid #26324a;font-size:.88rem}
+.rt th{background:#1a2230;color:#a3b0c2;font-size:.74rem;font-weight:600}
+.rt td.b{color:#5a6b85}
+.rt td.f{color:#ffd166;font-weight:800;background:#3a3218}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🔦 주성분 그림자극<small>단위만 바꿨는데 첫 주성분이 바뀌었다? — 주성분 분석</small></h1>
+<div class="tabs">
+  <button class="on" data-tab="t1">① 그림자</button>
+  <button data-tab="t2">② 고유값</button>
+  <button data-tab="t3">③ 단위·SVD</button>
+  <button data-tab="t4">④ 한계·추천</button>
+</div>
+
+<!-- ① -->
+<section id="tab-t1">
+  <div class="card">
+    <h2>📏 첫 장면: 같은 200명, 단위만 다르게</h2>
+    <p class="note" style="margin-top:0">키와 몸무게 모의 데이터 200명. 가로·세로를 <b>같은 눈금 비율</b>로 그립니다. 노란 화살표가 첫 번째 주성분.</p>
+    <div class="row" style="margin-top:8px"><button class="pill on" data-hk="cm">키 = cm</button><button class="pill" data-hk="m">키 = m</button><button class="pill" data-hk="std">표준화</button></div>
+    <canvas id="hkCv"></canvas>
+    <div class="stats"><div>첫 주성분 방향<b id="hkV">-</b></div><div>설명 비율<b id="hkR">-</b></div><div>키 분산<b id="hkS">-</b></div></div>
+    <div id="hkMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🔦 그림자가 가장 넓게 퍼지는 방향</h2>
+    <p class="note" style="margin-top:0">평균을 뺀 cm 데이터를 한 직선 위로 내립니다. 방향을 돌려 그림자(투영)의 분산을 보세요.</p>
+    <div class="sl"><span>직선 각도</span><input type="range" id="shA" min="0" max="179" value="10"><b id="shAv">10°</b></div>
+    <div class="row" style="margin-top:6px"><button class="btn sec sm" id="shMax">가장 넓은 방향 찾기</button><button class="btn sec sm" id="shPerp">그 수직 방향</button></div>
+    <canvas id="shCv"></canvas>
+    <canvas id="shCurve"></canvas>
+    <div id="shMsg"></div>
+  </div>
+
+  <div class="say">차원 축소는 변수를 <b>빼는</b> 대신 <b>섞습니다</b>. 원래 변수를 섞어 서로 수직인 새 축을 세우고, 정보(분산)가 많은 축만 남기는 것 — 주성분 분석, <b>PCA</b>.</div>
+</section>
+
+<!-- ② -->
+<section id="tab-t2" hidden>
+  <div class="card">
+    <h2>🧮 공분산 행렬 → 고유값 분해</h2>
+    <p class="note" style="margin-top:0">대각선 = 각 변수의 분산, 나머지 = 공분산. 값을 바꿔 타원과 축이 어떻게 변하는지 보세요. 처음 값은 첫 장면 cm 데이터.</p>
+    <div class="sl"><span>키 분산</span><input type="range" id="cvA" min="5" max="120" step="0.01" value="54.97"><b id="cvAv">54.97</b></div>
+    <div class="sl"><span>몸무게 분산</span><input type="range" id="cvB" min="5" max="120" step="0.01" value="73.98"><b id="cvBv">73.98</b></div>
+    <div class="sl"><span>공분산</span><input type="range" id="cvC" min="-80" max="80" step="0.01" value="35.17"><b id="cvCv">35.17</b></div>
+    <div class="row" style="margin-top:6px"><button class="btn sec sm" id="cvReset">첫 장면 값으로</button></div>
+    <canvas id="cvCanvas"></canvas>
+    <div class="out" id="cvOut"></div>
+  </div>
+
+  <div class="card">
+    <h2>❓ 퀴즈 ① 고유값이 6, 3, 1. 주성분 두 개를 남기면 전체 분산의 몇 %?</h2>
+    <div class="opts" id="q1">
+      <button data-a="a">60%</button>
+      <button data-a="b">66.7%</button>
+      <button data-a="c">90%</button>
+    </div>
+    <div id="q1Msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🌸 몇 개를 남길까: 붓꽃 150개, 4가지 측정</h2>
+    <p class="note" style="margin-top:0">꽃받침·꽃잎의 길이와 너비(모두 cm). 브라우저에서 공분산 행렬을 직접 고유값 분해합니다.</p>
+    <div class="sl"><span>남길 개수</span><input type="range" id="irK" min="1" max="4" value="2"><b id="irKv">2</b></div>
+    <canvas id="irCv"></canvas>
+    <div class="out" id="irOut"></div>
+    <p class="note">막대 = 고유값(스크리 그림), 선 = 누적 비율. 곡선이 꺾여 평평해지는 곳 뒤는 대부분 잡음. 보통 누적 <b>80~90%</b>까지 남깁니다.</p>
+  </div>
+</section>
+
+<!-- ③ -->
+<section id="tab-t3" hidden>
+  <div class="card">
+    <h2>🔁 단위를 조금씩 바꿔 보기</h2>
+    <p class="note" style="margin-top:0">키에 곱하는 수를 바꿉니다 (1 = cm, 0.01 = m, 10 = mm). 몸무게는 kg 그대로.</p>
+    <div class="sl"><span>키 × </span><input type="range" id="unS" min="-200" max="100" value="0"><b id="unSv">1</b></div>
+    <div class="row" style="margin-top:6px"><button class="pill" data-un="-200">m</button><button class="pill on" data-un="0">cm</button><button class="pill" data-un="100">mm</button><button class="pill" id="unStd">표준화 끄기/켜기</button></div>
+    <canvas id="unCv"></canvas>
+    <div class="out" id="unOut"></div>
+  </div>
+
+  <div class="card">
+    <h2>🧪 공분산 없이, 특잇값 분해로</h2>
+    <p class="note" style="margin-top:0">붓꽃 데이터. 왼쪽은 공분산 행렬의 고유값, 오른쪽은 평균 뺀 데이터 행렬을 바로 특잇값 분해한 σ²/(n−1).</p>
+    <div class="tw"><table class="df" id="svTb"></table></div>
+    <p class="note">V의 열 = 주성분 방향. 부호(±)는 어느 쪽을 앞으로 볼지의 차이일 뿐 같은 축입니다.</p>
+  </div>
+
+  <div class="card">
+    <h2>⚠️ 왜 굳이 SVD? 전치를 곱하면 생기는 오차</h2>
+    <p class="note" style="margin-top:0">열 두 개가 아주 비슷한 3×2 행렬 [[1,1],[ε,0],[0,ε]]. 진짜 작은 특잇값은 ε. XᵀX를 만들면 1 + ε²가 컴퓨터에서 1로 뭉개집니다.</p>
+    <div class="sl"><span>ε = 10^</span><input type="range" id="epK" min="-12" max="-2" value="-9"><b id="epKv">-9</b></div>
+    <div class="out" id="epOut"></div>
+  </div>
+
+  <div class="card">
+    <h2>🐍 사이킷런으로 세 줄</h2>
+    <div class="code"><span class="k">from</span> sklearn.datasets <span class="k">import</span> load_iris
+<span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+<span class="k">from</span> sklearn.decomposition <span class="k">import</span> PCA
+
+X = <span class="f">load_iris</span>().data                       <span class="c"># 150 × 4, 모두 cm</span>
+<span class="c"># X = StandardScaler().fit_transform(X)    # 단위가 섞였다면 먼저!</span>
+pca = <span class="f">PCA</span>(n_components=<span class="n">2</span>)                  <span class="c"># 평균 빼기는 알아서</span>
+Z = pca.<span class="f">fit_transform</span>(X)                     <span class="c"># 150 × 2 (안에서는 SVD)</span>
+<span class="f">print</span>(pca.explained_variance_ratio_)         <span class="c"># [0.9246 0.0531]</span></div>
+    <canvas id="izCv"></canvas>
+    <div class="row" style="margin-top:6px"><span class="lbl">● setosa</span><span class="lbl" style="color:#ff9b5c">● versicolor</span><span class="lbl" style="color:#6fdc9a">● virginica</span></div>
+    <p class="note">사차원에서 보이지 않던 무리가 평면 위에: setosa는 뚜렷이 떨어지고, 나머지 둘은 일부 겹칩니다.</p>
+  </div>
+</section>
+
+<!-- ④ -->
+<section id="tab-t4" hidden>
+  <div class="card">
+    <h2>⭕ PCA가 못 보는 것 ①: 휘어진 구조</h2>
+    <p class="note" style="margin-top:0">큰 동그라미 안의 작은 동그라미 (설명용 모의 데이터). 어느 방향으로 그림자를 내려도…</p>
+    <div class="sl"><span>그림자 각도</span><input type="range" id="ciA" min="0" max="179" value="0"><b id="ciAv">0°</b></div>
+    <div class="row" style="margin-top:6px"><button class="pill on" data-ci="lin">직선 그림자</button><button class="pill" data-ci="rad">중심에서의 거리로</button></div>
+    <canvas id="ciCv"></canvas>
+    <div id="ciMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🔍 PCA가 못 보는 것 ②: 신호가 작은 축에 숨을 때</h2>
+    <p class="note" style="margin-top:0">두 무리를 가르는 차이가 분산이 <b>작은</b> 방향에 있는 모의 데이터.</p>
+    <div class="row"><button class="pill on" data-sm="1">PC1만 남기기</button><button class="pill" data-sm="2">PC2만 남기기</button></div>
+    <canvas id="smCv"></canvas>
+    <div id="smMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>❓ 퀴즈 ② 영화 세 편 중 두 편에 5점, 4점. 안 본 영화는 0으로 적힘. 이 행을 np.mean으로 평균 내면?</h2>
+    <div class="opts" id="q2">
+      <button data-a="a">4.5</button>
+      <button data-a="b">3</button>
+      <button data-a="c">0</button>
+    </div>
+    <div id="q2Msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🎬 빈칸을 채우는 행렬 분해 (잠재 요인 1개)</h2>
+    <p class="note" style="margin-top:0">사용자 6명 × 영화 5편. 앞의 세 편은 액션, 뒤의 두 편은 로맨스 — 하지만 표에는 장르를 적지 않았습니다. 빈칸 = 안 본 영화. (평점은 설명용 가상)</p>
+    <div class="row" style="margin-top:8px"><button class="pill on" data-mu="ok">평균: 평가한 칸만</button><button class="pill" data-mu="bad">평균: np.mean (0 포함)</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="rtFill">평균 빼기 → SVD → 1개로 복원 ▶</button><button class="btn sec sm" id="rtReset">처음</button></div>
+    <div class="tw" style="border:0"><table class="rt" id="rtTb"></table></div>
+    <canvas id="rtCv"></canvas>
+    <div id="rtMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>🐍 빈칸 평균과 복원 코드</h2>
+    <div class="code"><span class="k">import</span> numpy <span class="k">as</span> np
+R = np.<span class="f">array</span>([[<span class="n">4</span>,<span class="n">5</span>,<span class="n">0</span>,<span class="n">1</span>,<span class="n">2</span>], [<span class="n">4</span>,<span class="n">0</span>,<span class="n">5</span>,<span class="n">1</span>,<span class="n">2</span>], [<span class="n">1</span>,<span class="n">2</span>,<span class="n">1</span>,<span class="n">0</span>,<span class="n">3</span>],
+              [<span class="n">5</span>,<span class="n">5</span>,<span class="n">2</span>,<span class="n">3</span>,<span class="n">0</span>], [<span class="n">1</span>,<span class="n">0</span>,<span class="n">1</span>,<span class="n">5</span>,<span class="n">4</span>], [<span class="n">0</span>,<span class="n">1</span>,<span class="n">1</span>,<span class="n">5</span>,<span class="n">5</span>]], float)
+M = R > <span class="n">0</span>                                       <span class="c"># 평가한 칸</span>
+mu = (R * M).<span class="f">sum</span>(<span class="n">1</span>) / M.<span class="f">sum</span>(<span class="n">1</span>)                  <span class="c"># np.mean(R, 1)은 0까지 셈!</span>
+C = np.<span class="f">where</span>(M, R - mu[:, <span class="k">None</span>], <span class="n">0</span>)              <span class="c"># 중심화, 빈칸은 0</span>
+U, s, Vt = np.linalg.<span class="f">svd</span>(C)
+A = s[<span class="n">0</span>] * np.<span class="f">outer</span>(U[:, <span class="n">0</span>], Vt[<span class="n">0</span>]) + mu[:, <span class="k">None</span>]   <span class="c"># 잠재 요인 1개로 복원</span>
+<span class="f">print</span>(A.<span class="f">round</span>(<span class="n">2</span>))</div>
+  </div>
+
+  <div class="card">
+    <h2>📌 세 줄 정리</h2>
+    <div class="sum3"><ol>
+      <li>PCA는 <b>분산이 가장 큰 방향</b>부터 서로 수직인 축을 세우고, 공분산 행렬의 <b>고유벡터가 축, 고유값이 분산</b>이다.</li>
+      <li>남길 개수는 고유값으로 계산한 <b>설명 비율</b>로 정하고, 단위가 다르면 먼저 <b>표준화</b>한다.</li>
+      <li>실제 계산은 <b>특잇값 분해</b>로 하고, 같은 도구가 <b>추천 시스템의 빈칸</b>도 채운다.</li>
+    </ol></div>
+  </div>
+
+  <div class="card">
+    <h2>🤔 생각해 볼 질문</h2>
+    <p class="note" style="margin-top:0">내가 다루는 데이터에서 <b>단위가 서로 다른 변수</b>는? 그대로 함께 넣으면 어떤 변수가 <b>목소리를 독차지</b>할까요? (이 기기에만 저장)</p>
+    <div class="row" style="margin-top:8px"><input type="text" id="myIn" maxlength="70" placeholder="예: 매출(원) + 할인율(%) → 매출이 독차지"><button class="btn sm" id="myAdd">추가</button></div>
+    <div class="mine" id="mine"></div>
+  </div>
+</section>
+
+<footer>© 2026 정필 수심명 · <a href="https://blog.naver.com/omyman" target="_blank" rel="noopener">blog.naver.com/omyman</a><br>선형대수 13 부록 · 인터넷 없이 동작</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const HW=[172.76,81.29,176.57,85.1,172.64,58.07,159.57,61.73,177.24,63.96,173.57,66.95,165.7,52.3,174.65,82.73,172.92,59.0,172.35,64.04,170.23,69.15,174.37,62.44,164.11,59.55,168.7,59.71,166.14,61.62,174.79,58.51,170.32,61.69,167.66,61.94,163.74,58.58,167.94,64.22,170.07,62.69,167.8,69.7,180.35,68.63,178.05,68.74,148.31,46.67,154.89,51.72,168.6,54.05,166.62,67.12,171.71,56.89,171.74,60.08,186.94,78.04,161.1,62.88,166.98,59.99,186.34,58.65,175.17,71.47,175.3,70.26,165.89,51.23,156.82,63.25,171.34,60.2,170.87,56.51,160.18,59.87,164.53,60.29,169.42,66.28,162.44,47.62,169.21,79.03,170.76,60.64,170.28,52.85,165.95,67.52,174.75,65.01,177.13,71.88,172.57,63.82,163.45,60.59,175.85,70.48,165.99,56.62,177.03,74.65,161.43,56.1,177.32,62.43,169.84,65.52,160.01,62.57,167.49,61.66,170.43,58.36,172.18,71.27,162.14,46.2,161.14,51.44,171.6,66.27,166.27,51.87,171.88,66.35,176.08,68.21,156.81,64.28,172.04,58.9,179.8,65.87,167.62,66.24,163.51,41.45,176.02,93.41,172.03,60.63,177.17,63.46,167.24,70.23,158.15,57.57,169.12,50.24,166.43,67.88,176.2,75.56,171.55,62.33,156.95,54.92,160.44,63.15,177.07,61.97,175.44,71.77,164.88,63.52,169.99,59.6,173.56,56.0,173.75,65.44,177.01,62.2,172.05,74.24,169.24,65.7,167.93,70.01,178.45,71.14,151.99,56.3,168.89,58.07,170.26,70.5,158.6,72.44,172.66,64.12,164.79,57.13,176.9,67.88,169.0,60.55,175.35,62.6,179.75,71.96,173.06,64.51,162.99,72.31,157.89,57.73,184.03,76.01,169.11,72.08,164.49,59.29,171.15,77.19,168.47,59.02,176.82,62.62,170.27,62.23,170.11,64.15,164.28,50.36,173.76,66.97,161.73,46.7,175.33,79.33,182.19,71.67,157.8,52.55,150.27,45.9,174.94,64.89,190.38,75.45,161.99,51.84,159.99,51.64,174.71,66.33,163.27,56.8,165.95,70.08,167.22,72.43,174.26,67.68,166.76,66.84,172.22,55.65,168.59,69.25,163.24,60.7,167.44,67.34,162.4,73.24,170.05,46.78,161.01,61.69,161.26,50.96,181.66,76.73,169.57,54.24,169.57,60.78,174.09,69.08,166.63,67.89,168.17,64.5,173.4,60.7,172.26,61.93,160.73,66.51,176.67,68.96,165.28,48.7,161.55,66.68,162.8,64.01,166.88,70.11,183.02,70.12,160.6,65.98,171.28,57.28,152.9,59.3,169.99,61.07,177.2,74.71,168.11,71.91,164.97,56.09,171.85,65.7,175.6,68.67,175.31,77.7,185.78,80.15,171.67,56.25,165.26,65.82,168.99,70.36,169.42,81.64,170.87,52.09,169.76,60.57,171.39,76.5,156.63,46.14,176.64,59.39,165.4,66.38,160.61,67.52,175.1,62.71,180.54,75.64,173.94,68.3,171.29,77.92,162.54,60.51,192.97,86.71,177.04,62.0,160.89,58.05,163.76,60.48,170.7,74.53,157.56,62.17,171.35,59.8,166.33,68.25,179.81,77.05,177.7,68.73,148.31,49.92,170.33,63.65,157.06,43.68,178.88,71.84,171.34,67.68,174.39,60.71,161.48,65.83];
+const IRIS=[5.1,3.5,1.4,0.2,4.9,3.0,1.4,0.2,4.7,3.2,1.3,0.2,4.6,3.1,1.5,0.2,5.0,3.6,1.4,0.2,5.4,3.9,1.7,0.4,4.6,3.4,1.4,0.3,5.0,3.4,1.5,0.2,4.4,2.9,1.4,0.2,4.9,3.1,1.5,0.1,5.4,3.7,1.5,0.2,4.8,3.4,1.6,0.2,4.8,3.0,1.4,0.1,4.3,3.0,1.1,0.1,5.8,4.0,1.2,0.2,5.7,4.4,1.5,0.4,5.4,3.9,1.3,0.4,5.1,3.5,1.4,0.3,5.7,3.8,1.7,0.3,5.1,3.8,1.5,0.3,5.4,3.4,1.7,0.2,5.1,3.7,1.5,0.4,4.6,3.6,1.0,0.2,5.1,3.3,1.7,0.5,4.8,3.4,1.9,0.2,5.0,3.0,1.6,0.2,5.0,3.4,1.6,0.4,5.2,3.5,1.5,0.2,5.2,3.4,1.4,0.2,4.7,3.2,1.6,0.2,4.8,3.1,1.6,0.2,5.4,3.4,1.5,0.4,5.2,4.1,1.5,0.1,5.5,4.2,1.4,0.2,4.9,3.1,1.5,0.2,5.0,3.2,1.2,0.2,5.5,3.5,1.3,0.2,4.9,3.6,1.4,0.1,4.4,3.0,1.3,0.2,5.1,3.4,1.5,0.2,5.0,3.5,1.3,0.3,4.5,2.3,1.3,0.3,4.4,3.2,1.3,0.2,5.0,3.5,1.6,0.6,5.1,3.8,1.9,0.4,4.8,3.0,1.4,0.3,5.1,3.8,1.6,0.2,4.6,3.2,1.4,0.2,5.3,3.7,1.5,0.2,5.0,3.3,1.4,0.2,7.0,3.2,4.7,1.4,6.4,3.2,4.5,1.5,6.9,3.1,4.9,1.5,5.5,2.3,4.0,1.3,6.5,2.8,4.6,1.5,5.7,2.8,4.5,1.3,6.3,3.3,4.7,1.6,4.9,2.4,3.3,1.0,6.6,2.9,4.6,1.3,5.2,2.7,3.9,1.4,5.0,2.0,3.5,1.0,5.9,3.0,4.2,1.5,6.0,2.2,4.0,1.0,6.1,2.9,4.7,1.4,5.6,2.9,3.6,1.3,6.7,3.1,4.4,1.4,5.6,3.0,4.5,1.5,5.8,2.7,4.1,1.0,6.2,2.2,4.5,1.5,5.6,2.5,3.9,1.1,5.9,3.2,4.8,1.8,6.1,2.8,4.0,1.3,6.3,2.5,4.9,1.5,6.1,2.8,4.7,1.2,6.4,2.9,4.3,1.3,6.6,3.0,4.4,1.4,6.8,2.8,4.8,1.4,6.7,3.0,5.0,1.7,6.0,2.9,4.5,1.5,5.7,2.6,3.5,1.0,5.5,2.4,3.8,1.1,5.5,2.4,3.7,1.0,5.8,2.7,3.9,1.2,6.0,2.7,5.1,1.6,5.4,3.0,4.5,1.5,6.0,3.4,4.5,1.6,6.7,3.1,4.7,1.5,6.3,2.3,4.4,1.3,5.6,3.0,4.1,1.3,5.5,2.5,4.0,1.3,5.5,2.6,4.4,1.2,6.1,3.0,4.6,1.4,5.8,2.6,4.0,1.2,5.0,2.3,3.3,1.0,5.6,2.7,4.2,1.3,5.7,3.0,4.2,1.2,5.7,2.9,4.2,1.3,6.2,2.9,4.3,1.3,5.1,2.5,3.0,1.1,5.7,2.8,4.1,1.3,6.3,3.3,6.0,2.5,5.8,2.7,5.1,1.9,7.1,3.0,5.9,2.1,6.3,2.9,5.6,1.8,6.5,3.0,5.8,2.2,7.6,3.0,6.6,2.1,4.9,2.5,4.5,1.7,7.3,2.9,6.3,1.8,6.7,2.5,5.8,1.8,7.2,3.6,6.1,2.5,6.5,3.2,5.1,2.0,6.4,2.7,5.3,1.9,6.8,3.0,5.5,2.1,5.7,2.5,5.0,2.0,5.8,2.8,5.1,2.4,6.4,3.2,5.3,2.3,6.5,3.0,5.5,1.8,7.7,3.8,6.7,2.2,7.7,2.6,6.9,2.3,6.0,2.2,5.0,1.5,6.9,3.2,5.7,2.3,5.6,2.8,4.9,2.0,7.7,2.8,6.7,2.0,6.3,2.7,4.9,1.8,6.7,3.3,5.7,2.1,7.2,3.2,6.0,1.8,6.2,2.8,4.8,1.8,6.1,3.0,4.9,1.8,6.4,2.8,5.6,2.1,7.2,3.0,5.8,1.6,7.4,2.8,6.1,1.9,7.9,3.8,6.4,2.0,6.4,2.8,5.6,2.2,6.3,2.8,5.1,1.5,6.1,2.6,5.6,1.4,7.7,3.0,6.1,2.3,6.3,3.4,5.6,2.4,6.4,3.1,5.5,1.8,6.0,3.0,4.8,1.8,6.9,3.1,5.4,2.1,6.7,3.1,5.6,2.4,6.9,3.1,5.1,2.3,5.8,2.7,5.1,1.9,6.8,3.2,5.9,2.3,6.7,3.3,5.7,2.5,6.7,3.0,5.2,2.3,6.3,2.5,5.0,1.9,6.5,3.0,5.2,2.0,6.2,3.4,5.4,2.3,5.9,3.0,5.1,1.8];
+const IRY="000000000000000000000000000000000000000000000000001111111111111111111111111111111111111111111111111122222222222222222222222222222222222222222222222222";
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),1800);}
+let touched=false;document.addEventListener('pointerdown',()=>{touched=true;},{once:true,capture:true});
+const vib=n=>{if(!touched)return;try{navigator.vibrate&&navigator.vibrate(n);}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function prep(cv,ratio){const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth||320,h=Math.round(w*ratio);
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return{c,w,h};}
+function T(c,s,x,y,col,size,al,bl,wt){c.fillStyle=col;c.font=`${wt||''} ${size||12}px -apple-system,"Malgun Gothic",sans-serif`;c.textAlign=al||'center';c.textBaseline=bl||'middle';c.fillText(s,x,y);}
+function single(sel,attr,fn){$$(sel).forEach(b=>b.onclick=()=>{$$(sel).forEach(x=>x.classList.toggle('on',x===b));vib(8);fn(b.dataset[attr]);});}
+function quiz(id,ans,fn){$$(`#${id} button`).forEach(b=>b.onclick=()=>{const ok=b.dataset.a===ans;$$(`#${id} button`).forEach(x=>x.className=x.dataset.a===ans?'right':x===b?'wrong':'');vib(ok?[30,40,60]:80);$(`#${id}Msg`).innerHTML=fn(ok);});}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(r){let u=0,v=0;while(!u)u=r();while(!v)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function rr(c,x,y,w,h,r){r=Math.min(r,Math.abs(w)/2,Math.abs(h)/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function arrow(c,x0,y0,x1,y1,col,lw){const a=Math.atan2(y1-y0,x1-x0);c.strokeStyle=col;c.fillStyle=col;c.lineWidth=lw||2;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1-6*Math.cos(a),y1-6*Math.sin(a));c.stroke();c.beginPath();c.moveTo(x1,y1);c.lineTo(x1-9*Math.cos(a-.45),y1-9*Math.sin(a-.45));c.lineTo(x1-9*Math.cos(a+.45),y1-9*Math.sin(a+.45));c.closePath();c.fill();}
+const CA='#7cc4ff',CB='#ff9b5c',GO='#ffd166',OK='#6fdc9a',BAD='#ff7d7d',PU='#b79cff',MU='#a3b0c2',FG='#eff3f8';
+const f2=(v,d=2)=>(+v).toFixed(d);
+
+/* ---- 선형대수 도구 ---- */
+function mean(X){const n=X.length,p=X[0].length,m=Array(p).fill(0);X.forEach(r=>r.forEach((v,j)=>m[j]+=v/n));return m;}
+function center(X){const m=mean(X);return X.map(r=>r.map((v,j)=>v-m[j]));}
+function cov(X){const Z=center(X),n=X.length,p=X[0].length,C=Array.from({length:p},()=>Array(p).fill(0));Z.forEach(r=>{for(let i=0;i<p;i++)for(let j=0;j<p;j++)C[i][j]+=r[i]*r[j]/(n-1);});return C;}
+function standardize(X){const C=cov(X),m=mean(X);return X.map(r=>r.map((v,j)=>(v-m[j])/Math.sqrt(C[j][j])));}
+function eigSym(A0){const n=A0.length,A=A0.map(r=>r.slice()),V=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>+(i===j)));
+  for(let sw=0;sw<100;sw++){let off=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)off+=A[i][j]**2;if(off<1e-30)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){if(Math.abs(A[p][q])<1e-300)continue;const th=(A[q][q]-A[p][p])/(2*A[p][q]),t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1)),cs=1/Math.sqrt(t*t+1),sn=t*cs;
+      for(let k=0;k<n;k++){const a=A[k][p],b=A[k][q];A[k][p]=cs*a-sn*b;A[k][q]=sn*a+cs*b;}for(let k=0;k<n;k++){const a=A[p][k],b=A[q][k];A[p][k]=cs*a-sn*b;A[q][k]=sn*a+cs*b;}
+      for(let k=0;k<n;k++){const a=V[k][p],b=V[k][q];V[k][p]=cs*a-sn*b;V[k][q]=sn*a+cs*b;}}}
+  const idx=[...Array(n).keys()].sort((a,b)=>A[b][b]-A[a][a]);return{vals:idx.map(i=>A[i][i]),vecs:idx.map(i=>V.map(r=>r[i]))};}
+/* 단측 야코비 SVD: 열끼리 직교가 될 때까지 회전 */
+function svd(X0){const m=X0.length,n=X0[0].length,U=X0.map(r=>r.slice()),V=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>+(i===j)));
+  for(let sw=0;sw<60;sw++){let rot=0;for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){let a=0,b=0,g=0;for(let k=0;k<m;k++){a+=U[k][p]**2;b+=U[k][q]**2;g+=U[k][p]*U[k][q];}
+      if(Math.abs(g)<=1e-15*Math.sqrt(a*b)||g===0)continue;rot++;const z=(b-a)/(2*g),t=Math.sign(z||1)/(Math.abs(z)+Math.sqrt(1+z*z)),cs=1/Math.sqrt(1+t*t),sn=cs*t;
+      for(let k=0;k<m;k++){const x=U[k][p],y=U[k][q];U[k][p]=cs*x-sn*y;U[k][q]=sn*x+cs*y;}for(let k=0;k<n;k++){const x=V[k][p],y=V[k][q];V[k][p]=cs*x-sn*y;V[k][q]=sn*x+cs*y;}}if(!rot)break;}
+  const s=[...Array(n).keys()].map(j=>Math.sqrt(U.reduce((t,r)=>t+r[j]**2,0)));const idx=[...Array(n).keys()].sort((a,b)=>s[b]-s[a]);
+  return{s:idx.map(j=>s[j]),V:idx.map(j=>V.map(r=>r[j])),U:idx.map(j=>U.map(r=>s[j]?r[j]/s[j]:0))};}
+function pca(X){const C=cov(X),e=eigSym(C);const tot=e.vals.reduce((a,b)=>a+b,0);e.vecs=e.vecs.map(v=>{const k=v.reduce((a,b,i)=>Math.abs(b)>Math.abs(v[a])?i:a,0);return v[k]<0?v.map(x=>-x):v;});return{C,vals:e.vals,vecs:e.vecs,ratio:e.vals.map(v=>v/tot)};}
+
+const HWX=[];for(let i=0;i<HW.length;i+=2)HWX.push([HW[i],HW[i+1]]);
+const IR=[];for(let i=0;i<IRIS.length;i+=4)IR.push(IRIS.slice(i,i+4));const IRC=[CA,CB,OK];
+
+/* 같은 눈금 산점도 */
+function scatterEq(c,w,h,P,opt){opt=opt||{};const pad=34;const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const sc=Math.min((w-pad-12)/((x1-x0)||1e-9),(h-pad-12)/((y1-y0)||1e-9));const cx=(x0+x1)/2,cy=(y0+y1)/2,ox=pad+(w-pad-12)/2,oy=12+(h-pad-12)/2;
+  const X=x=>ox+(x-cx)*sc,Y=y=>oy-(y-cy)*sc;return{X,Y,sc,x0,x1,y0,y1};}
+
+/* ===== ① 첫 장면 ===== */
+let hkM='cm';
+function hkData(m){return m==='cm'?HWX:m==='m'?HWX.map(([a,b])=>[a/100,b]):standardize(HWX);}
+function hkDraw(){const X=hkData(hkM),P=pca(X),{c,w,h}=prep($('#hkCv'),.8);const g=scatterEq(c,w,h,X);
+  c.strokeStyle='#33425a';c.lineWidth=1;c.strokeRect(g.X(g.x0)-4,g.Y(g.y1)-4,g.X(g.x1)-g.X(g.x0)+8,g.Y(g.y0)-g.Y(g.y1)+8);
+  X.forEach(([a,b])=>{c.fillStyle='rgba(124,196,255,.55)';c.beginPath();c.arc(g.X(a),g.Y(b),2.6,0,7);c.fill();});
+  const m=mean(X),v=P.vecs[0],L=2.2*Math.sqrt(P.vals[0]);arrow(c,g.X(m[0]-v[0]*L),g.Y(m[1]-v[1]*L),g.X(m[0]+v[0]*L),g.Y(m[1]+v[1]*L),GO,3);
+  const v2=P.vecs[1],L2=2.2*Math.sqrt(P.vals[1]);c.strokeStyle=PU;c.lineWidth=2;c.beginPath();c.moveTo(g.X(m[0]-v2[0]*L2),g.Y(m[1]-v2[1]*L2));c.lineTo(g.X(m[0]+v2[0]*L2),g.Y(m[1]+v2[1]*L2));c.stroke();
+  const ux={cm:'키 (cm)',m:'키 (m)',std:'키 (표준화)'}[hkM],uy=hkM==='std'?'몸무게 (표준화)':'몸무게 (kg)';T(c,ux,w/2,h-8,MU,10);c.save();c.translate(10,h/2);c.rotate(-Math.PI/2);T(c,uy,0,0,MU,10);c.restore();
+  T(c,`${f2(g.x0,hkM==='m'?2:1)}`,g.X(g.x0),g.Y(g.y0)+16,'#5a6b85',9);T(c,`${f2(g.x1,hkM==='m'?2:1)}`,g.X(g.x1),g.Y(g.y0)+16,'#5a6b85',9);
+  $('#hkV').textContent=`(${f2(v[0],3)}, ${f2(v[1],3)})`;$('#hkR').textContent=f2(P.ratio[0]*100)+'%';$('#hkS').textContent=hkM==='m'?f2(P.C[0][0],4):f2(P.C[0][0]);
+  $('#hkMsg').innerHTML={cm:'<div class="res y">첫 주성분(노랑)이 키와 몸무게를 <b>함께 섞은</b> 대각선 방향, 설명 비율 <b>78.25%</b>. 키가 크면 몸무게도 무거운 경향이 한 축으로 묶였습니다. 보라 선은 그와 수직인 두 번째 주성분.</div>',m:'<div class="res r">같은 사람들인데 키를 m로 적자 가로 폭이 <b>100분의 1</b>로 줄어 점들이 세로 막대가 됐습니다. 첫 주성분은 거의 <b>몸무게만</b> (0.005, 1.000), 비율은 <b>99.99%</b>. PCA는 숫자의 크기만 봅니다 — <b>높은 비율이 좋은 결과라는 뜻은 아닙니다</b>. → ③ 탭</div>',std:'<div class="res g">평균을 빼고 표준편차로 나눠 두 변수 모두 분산 1로 맞추면, 단위와 상관없이 첫 주성분이 <b>(0.707, 0.707)</b> — 같은 비중으로 섞고, 설명 비율은 약 <b>77.6%</b>.</div>'}[hkM];}
+single('[data-hk]','hk',v=>{hkM=v;hkDraw();});
+
+/* 그림자 */
+const HC=center(HWX),HP=pca(HWX),PC1A=Math.atan2(HP.vecs[0][1],HP.vecs[0][0])*180/Math.PI;
+const shVar=d=>{const t=d*Math.PI/180,u=[Math.cos(t),Math.sin(t)],C=HP.C;return C[0][0]*u[0]*u[0]+2*C[0][1]*u[0]*u[1]+C[1][1]*u[1]*u[1];};
+function shDraw(){const d=+$('#shA').value;$('#shAv').textContent=d+'°';const t=d*Math.PI/180,u=[Math.cos(t),Math.sin(t)];
+  const{c,w,h}=prep($('#shCv'),.8);const g=scatterEq(c,w,h,HC.concat([[-32,-32],[32,32]]));
+  c.strokeStyle='#5a6b85';c.lineWidth=1;c.setLineDash([4,4]);c.beginPath();c.moveTo(g.X(-34*u[0]),g.Y(-34*u[1]));c.lineTo(g.X(34*u[0]),g.Y(34*u[1]));c.stroke();c.setLineDash([]);
+  HC.forEach(([a,b])=>{const s=a*u[0]+b*u[1];c.strokeStyle='rgba(124,196,255,.12)';c.beginPath();c.moveTo(g.X(a),g.Y(b));c.lineTo(g.X(s*u[0]),g.Y(s*u[1]));c.stroke();c.fillStyle='rgba(124,196,255,.45)';c.beginPath();c.arc(g.X(a),g.Y(b),2.2,0,7);c.fill();});
+  HC.forEach(([a,b])=>{const s=a*u[0]+b*u[1];c.fillStyle=GO;c.beginPath();c.arc(g.X(s*u[0]),g.Y(s*u[1]),2,0,7);c.fill();});
+  T(c,'키 →',w-14,h-10,MU,10,'right');T(c,'몸무게 ↑',38,14,MU,10,'left');
+  const v=shVar(d);const cv=prep($('#shCurve'),.4);const{c:c2,w:w2,h:h2}=cv;const L=30,R=w2-10,Tp=10,B=h2-20,X=a=>L+(R-L)*a/179,Y=y=>B-(B-Tp)*y/110;
+  [0,50,100].forEach(y=>{c2.strokeStyle='#1e2633';c2.beginPath();c2.moveTo(L,Y(y));c2.lineTo(R,Y(y));c2.stroke();T(c2,String(y),L-4,Y(y),'#5a6b85',9,'right');});
+  c2.strokeStyle=CA;c2.lineWidth=2;c2.beginPath();for(let a=0;a<180;a++){a?c2.lineTo(X(a),Y(shVar(a))):c2.moveTo(X(a),Y(shVar(a)));}c2.stroke();
+  c2.fillStyle=GO;c2.beginPath();c2.arc(X(d),Y(v),5,0,7);c2.fill();[0,45,90,135,179].forEach(a=>T(c2,a+'°',X(a),B+11,'#5a6b85',9));T(c2,'그림자 분산',L+4,Tp+4,MU,9,'left');
+  const near=Math.abs(d-Math.round(PC1A))<=1,perp=Math.abs(d-Math.round(PC1A+90))<=1;
+  $('#shMsg').innerHTML=`<div class="res ${near?'g':perp?'y':'y'}">그림자의 분산 <b>${f2(v)}</b> ${near?`— <b>최대</b>! 이 방향(${f2(PC1A,1)}°)이 첫 번째 주성분, 분산 = 첫 고유값 ${f2(HP.vals[0])}.`:perp?`— 첫 주성분과 <b>수직</b>인 방향. 남은 방향이 이것 하나뿐이라 이것이 두 번째 주성분, 분산 = 둘째 고유값 ${f2(HP.vals[1])}. 두 축이 수직이라 정보가 겹치지 않습니다.`:`(최대 ${f2(HP.vals[0])}, 최소 ${f2(HP.vals[1])}). 그림자가 넓게 퍼질수록 점들을 서로 구분하기 쉽습니다 — PCA가 말하는 <b>정보 = 분산</b>.`}</div>`;}
+$('#shA').oninput=shDraw;$('#shMax').onclick=()=>{$('#shA').value=Math.round(PC1A);shDraw();vib(10);};$('#shPerp').onclick=()=>{$('#shA').value=Math.round(PC1A+90)%180;shDraw();vib(10);};
+
+/* ===== ② 공분산 ===== */
+function cvDraw(){let a=+$('#cvA').value,b=+$('#cvB').value,cc=+$('#cvC').value;const lim=Math.sqrt(a*b)*.98;if(Math.abs(cc)>lim){cc=Math.sign(cc)*lim;$('#cvC').value=cc;}
+  $('#cvAv').textContent=f2(a);$('#cvBv').textContent=f2(b);$('#cvCv').textContent=f2(cc);
+  const tr=a+b,dd=Math.sqrt((a-b)**2/4+cc*cc),l1=tr/2+dd,l2=tr/2-dd;let v1=Math.abs(cc)<1e-9?(a>=b?[1,0]:[0,1]):[cc,l1-a];const nn=Math.hypot(...v1);v1=v1.map(x=>x/nn);if(v1[0]<0||(v1[0]===0&&v1[1]<0))v1=v1.map(x=>-x);const v2=[-v1[1],v1[0]];
+  const{c,w,h}=prep($('#cvCanvas'),.7);const cx=w/2,cy=h/2,S=Math.min(w,h)/2/(2.2*Math.sqrt(120*1.3));
+  c.strokeStyle='#1e2633';c.beginPath();c.moveTo(10,cy);c.lineTo(w-10,cy);c.moveTo(cx,10);c.lineTo(cx,h-10);c.stroke();T(c,'키',w-12,cy-10,MU,10,'right');T(c,'몸무게',cx+6,16,MU,10,'left');
+  c.save();c.translate(cx,cy);c.rotate(-Math.atan2(v1[1],v1[0]));c.fillStyle='rgba(124,196,255,.15)';c.strokeStyle=CA;c.lineWidth=1.5;c.beginPath();c.ellipse(0,0,2*Math.sqrt(l1)*S,2*Math.sqrt(Math.max(l2,0))*S,0,0,7);c.fill();c.stroke();c.restore();
+  arrow(c,cx,cy,cx+v1[0]*2*Math.sqrt(l1)*S,cy-v1[1]*2*Math.sqrt(l1)*S,GO,3);arrow(c,cx,cy,cx+v2[0]*2*Math.sqrt(Math.max(l2,0))*S,cy-v2[1]*2*Math.sqrt(Math.max(l2,0))*S,PU,2.5);
+  T(c,`λ₁ = ${f2(l1)}`,12,14,GO,12,'left','middle','800');T(c,`λ₂ = ${f2(l2)}`,12,32,PU,12,'left','middle','800');
+  $('#cvOut').innerHTML=`Σ = [[${f2(a)}, <span class="w">${f2(cc)}</span>],\n     [<span class="w">${f2(cc)}</span>, ${f2(b)}]]   <span class="p"># 언제나 대칭</span>\n고유값 λ₁ = <span class="o">${f2(l1)}</span>, λ₂ = ${f2(l2)}\n고유벡터 v₁ = (${f2(v1[0],3)}, ${f2(v1[1],3)}),  v₂ = (${f2(v2[0],3)}, ${f2(v2[1],3)})\nv₁·v₂ = ${f2(Math.abs(v1[0]*v2[0]+v1[1]*v2[1])<5e-13?0:v1[0]*v2[0]+v1[1]*v2[1],3)}  <span class="p"># 대칭 행렬 → 수직</span>\nλ₁ / (λ₁+λ₂) = ${f2(l1)} / ${f2(tr)} = <span class="w">${f2(l1/tr*100)}%</span>  <span class="p"># 고유값 합 = 분산 합 = 대각합</span>`;}
+['#cvA','#cvB','#cvC'].forEach(id=>$(id).oninput=cvDraw);$('#cvReset').onclick=()=>{$('#cvA').value=54.97;$('#cvB').value=73.98;$('#cvC').value=35.17;cvDraw();};
+quiz('q1','c',ok=>`<div class="res ${ok?'g':'r'}">${ok?'정답!':'아쉬워요.'} 정답은 <b>90%</b>. 고유값을 모두 더하면 6 + 3 + 1 = <b>10</b>, 남긴 두 개의 합은 6 + 3 = <b>9</b> → 9/10. 개수(2/3 = 66.7%)가 아니라 <b>고유값의 크기</b>로 따집니다. 60%는 첫 번째 하나만 남긴 값. 이 비율이 <b>설명된 분산 비율</b>.</div>`);
+const IP=pca(IR);
+function irDraw(){const k=+$('#irK').value;$('#irKv').textContent=k;const{c,w,h}=prep($('#irCv'),.6);const L=36,R=w-36,Tp=14,B=h-26,bw=(R-L)/4,mx=4.5;const Y=v=>B-(B-Tp)*v/mx,Yr=p=>B-(B-Tp)*p;
+  [0,1,2,3,4].forEach(v=>{c.strokeStyle='#1e2633';c.beginPath();c.moveTo(L,Y(v));c.lineTo(R,Y(v));c.stroke();T(c,String(v),L-4,Y(v),'#5a6b85',9,'right');});[0,50,100].forEach(p=>T(c,p+'%',R+4,Yr(p/100),'#5a6b85',9,'left'));
+  let cum=0;const pts=[];IP.vals.forEach((v,i)=>{c.fillStyle=i<k?'#2f6fd0':'#26324a';rr(c,L+i*bw+bw*.2,Y(v),bw*.6,B-Y(v),5);c.fill();const tall=B-Y(v)>40;T(c,f2(v,3),L+i*bw+bw/2,tall?Y(v)+40:Y(v)-8,i<k?FG:'#5a6b85',10,'center','middle','700');T(c,'PC'+(i+1),L+i*bw+bw/2,B+12,MU,10);cum+=IP.ratio[i];pts.push([L+i*bw+bw/2,Yr(cum)]);});
+  c.strokeStyle=GO;c.lineWidth=2;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.stroke();pts.forEach((p,i)=>{c.fillStyle=GO;c.beginPath();c.arc(...p,i===k-1?5:3,0,7);c.fill();});
+  const cs=IP.ratio.slice(0,k).reduce((a,b)=>a+b,0);
+  $('#irOut').innerHTML=`비율 = ${IP.ratio.map(r=>f2(r*100,1)+'%').join(', ')}\n${k}개 남김 → 누적 <span class="w">${f2(cs*100,1)}%</span>${k===2?'  <span class="p"># 사차원을 평면 하나로 눌러도 정보가 거의 남음</span>':''}`;}
+$('#irK').oninput=irDraw;
+
+/* ===== ③ 단위 ===== */
+let unStd=false;
+function unAt(lf,std){const f=Math.pow(10,lf);let X=HWX.map(([a,b])=>[a*f,b]);if(std)X=standardize(X);return pca(X);}
+function unDraw(){const S=+$('#unS').value,lf=S/100,f=Math.pow(10,lf);$('#unSv').textContent=f>=1?(+f.toPrecision(3)).toString():f.toPrecision(2);$$('[data-un]').forEach(b=>b.classList.toggle('on',+b.dataset.un===S));$('#unStd').classList.toggle('on',unStd);
+  const{c,w,h}=prep($('#unCv'),.58);const L=34,R=w-34,Tp=12,B=h-26,X=l=>L+(R-L)*(l+2)/3,Y=p=>B-(B-Tp)*p;
+  [0,.5,1].forEach(p=>{c.strokeStyle='#1e2633';c.beginPath();c.moveTo(L,Y(p));c.lineTo(R,Y(p));c.stroke();T(c,f2(p,1),L-4,Y(p),'#5a6b85',9,'right');T(c,(p*100)+'%',R+4,Y(p),'#5a6b85',9,'left');});
+  [[-2,'m (×0.01)'],[0,'cm'],[1,'mm (×10)']].forEach(([l,s])=>T(c,s,X(l),B+12,'#5a6b85',9));
+  const A=[],Rt=[];for(let i=0;i<=60;i++){const l=-2+3*i/60,P=unAt(l,unStd);A.push([X(l),Y(Math.abs(P.vecs[0][0]))]);Rt.push([X(l),Y(P.ratio[0])]);}
+  c.strokeStyle=CA;c.lineWidth=2;c.beginPath();A.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.stroke();c.strokeStyle=GO;c.beginPath();Rt.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.stroke();
+  const P=unAt(lf,unStd);c.fillStyle=CA;c.beginPath();c.arc(X(lf),Y(Math.abs(P.vecs[0][0])),5,0,7);c.fill();c.fillStyle=GO;c.beginPath();c.arc(X(lf),Y(P.ratio[0]),5,0,7);c.fill();
+  T(c,'— PC1 속 키의 비중',R-4,B-30,CA,10,'right','middle','700');T(c,'— 첫 주성분 설명 비율',R-4,B-14,GO,10,'right','middle','700');
+  $('#unOut').innerHTML=`${unStd?'표준화 켬 → 모든 변수 분산 1\n':''}키 분산 = ${unStd?'1':`54.97 × ${f>=1?(+f.toPrecision(3)):f.toPrecision(2)}² = <span class="w">${(+(P.C[0][0]).toPrecision(4))}</span>`},  몸무게 분산 = ${unStd?'1':'73.98'}\nPC1 = (${f2(P.vecs[0][0],3)}, ${f2(P.vecs[0][1],3)}),  설명 비율 <span class="o">${f2(P.ratio[0]*100)}%</span>\n<span class="p">${unStd?'단위를 아무리 바꿔도 결과가 그대로 — 두 선이 평평':'단위가 작아지면 분산이 제곱으로 작아져 키가 무시되고, 커지면 키가 목소리를 독차지'}</span>`;}
+$('#unS').oninput=unDraw;$$('[data-un]').forEach(b=>b.onclick=()=>{$('#unS').value=b.dataset.un;unDraw();vib(8);});$('#unStd').onclick=()=>{unStd=!unStd;unDraw();vib(8);};
+
+/* SVD vs 고유값 */
+function svTable(){const Z=center(IR),S=svd(Z),n=IR.length;const V=S.V.map(v=>{const k=v.reduce((a,b,i)=>Math.abs(b)>Math.abs(v[a])?i:a,0);return v[k]<0?v.map(x=>-x):v;});
+  $('#svTb').innerHTML=`<thead><tr><th></th><th>공분산 고유값</th><th>σ²/(n−1)</th><th>비율</th></tr></thead><tbody>${IP.vals.map((v,i)=>`<tr><th>PC${i+1}</th><td>${f2(v,4)}</td><td style="color:${GO}">${f2(S.s[i]**2/(n-1),4)}</td><td>${f2(IP.ratio[i]*100,2)}%</td></tr>`).join('')}<tr><th>방향 1</th><td colspan="3" style="font-size:.74rem">고유벡터 (${IP.vecs[0].map(x=>f2(x,3)).join(', ')})<br>V 첫 열 (${V[0].map(x=>f2(x,3)).join(', ')})</td></tr></tbody>`;}
+function epDraw(){const k=+$('#epK').value;$('#epKv').textContent=k;const e=Math.pow(10,k);const X=[[1,1],[e,0],[0,e]];const XtX=[[1+e*e,1],[1,1+e*e]];const E=eigSym(XtX);const S=svd(X);
+  const lmin=E.vals[1];$('#epOut').innerHTML=`진짜 작은 특잇값 = ε = <span class="w">${e.toExponential(1)}</span>\n\n① XᵀX를 만들어 고유값 분해\n  1 + ε² = ${(1+e*e)===1?'<span class="e">1 (ε²가 사라짐)</span>':(1+e*e).toPrecision(17)}\n  작은 고유값 = ${lmin.toExponential(3)}  →  √ = <span class="${Math.abs(Math.sqrt(Math.max(lmin,0))-e)/e<1e-3?'o':'e'}">${lmin>0?Math.sqrt(lmin).toExponential(3):'계산 불가 (0 이하)'}</span>\n\n② 데이터 행렬 X를 바로 SVD\n  작은 특잇값 = <span class="${Math.abs(S.s[1]-e)/e<1e-6?'o':'e'}">${S.s[1].toExponential(3)}</span>\n<span class="p">ε가 10⁻⁸보다 작아지면 ε²가 컴퓨터의 자릿수(약 16자리) 밖으로 밀려나 ①이 무너집니다</span>`;}
+$('#epK').oninput=epDraw;
+function izDraw(){const Z=center(IR),{c,w,h}=prep($('#izCv'),.7);const P=Z.map(r=>[r.reduce((s,v,j)=>s+v*IP.vecs[0][j],0),r.reduce((s,v,j)=>s+v*IP.vecs[1][j],0)]);const g=scatterEq(c,w,h,P);
+  c.strokeStyle='#1e2633';c.beginPath();c.moveTo(g.X(g.x0),g.Y(0));c.lineTo(g.X(g.x1),g.Y(0));c.moveTo(g.X(0),g.Y(g.y0));c.lineTo(g.X(0),g.Y(g.y1));c.stroke();
+  P.forEach((p,i)=>{c.fillStyle=IRC[+IRY[i]];c.globalAlpha=.8;c.beginPath();c.arc(g.X(p[0]),g.Y(p[1]),3,0,7);c.fill();});c.globalAlpha=1;T(c,'PC1 (92.5%) →',w-10,h-8,MU,10,'right');T(c,'PC2 (5.3%)',38,12,MU,10,'left');}
+
+/* ===== ④ 한계 ===== */
+const CIR=(()=>{const r=rng(5),P=[];for(let k=0;k<2;k++)for(let i=0;i<150;i++){const a=r()*Math.PI*2,R=(k?1:3)+.18*gauss(r);P.push([R*Math.cos(a),R*Math.sin(a),k]);}return P;})();let ciM='lin';
+function hist(c,x,y,w,h,vals,cls,lo,hi,label){const B=30,H=[Array(B).fill(0),Array(B).fill(0)];vals.forEach((v,i)=>{const b=Math.floor((v-lo)/(hi-lo)*B);if(b>=0&&b<B)H[cls[i]][b]++;});const mx=Math.max(...H[0],...H[1]);
+  [0,1].forEach(k=>{c.fillStyle=k?'rgba(255,155,92,.6)':'rgba(124,196,255,.6)';for(let b=0;b<B;b++){const bh=h*H[k][b]/mx;c.fillRect(x+b*w/B,y+h-bh,w/B-1,bh);}});T(c,label,x,y-6,MU,9,'left');}
+function ciDraw(){const d=+$('#ciA').value;$('#ciAv').textContent=d+'°';$('#ciA').disabled=ciM!=='lin';const t=d*Math.PI/180,u=[Math.cos(t),Math.sin(t)];const{c,w,h}=prep($('#ciCv'),.95);const top=h*.62;
+  const S=Math.min(w,top)/2/3.8,cx=w/2,cy=top/2+4;CIR.forEach(([a,b,k])=>{c.fillStyle=k?CB:CA;c.beginPath();c.arc(cx+a*S,cy-b*S,2.4,0,7);c.fill();});
+  if(ciM==='lin'){c.strokeStyle=GO;c.setLineDash([4,4]);c.beginPath();c.moveTo(cx-u[0]*3.6*S,cy+u[1]*3.6*S);c.lineTo(cx+u[0]*3.6*S,cy-u[1]*3.6*S);c.stroke();c.setLineDash([]);
+    hist(c,14,top+22,w-28,h-top-34,CIR.map(p=>p[0]*u[0]+p[1]*u[1]),CIR.map(p=>p[2]),-3.8,3.8,'그림자 위치의 분포');}
+  else{[1,2,3].forEach(R=>{c.strokeStyle='#33425a';c.setLineDash([2,4]);c.beginPath();c.arc(cx,cy,R*S,0,7);c.stroke();c.setLineDash([]);});hist(c,14,top+22,w-28,h-top-34,CIR.map(p=>Math.hypot(p[0],p[1])),CIR.map(p=>p[2]),0,3.8,'중심에서의 거리 분포');}
+  $('#ciMsg').innerHTML=ciM==='lin'?'<div class="res r">각도를 어떻게 돌려도 파랑(바깥)과 주황(안쪽)의 그림자가 <b>겹칩니다</b>. PCA는 <b>직선 축</b>만 쓰기 때문에 구부러진 구조를 펼치지 못합니다.</div>':'<div class="res g">"중심에서의 거리"라는 <b>휘어진</b> 기준으로 보면 두 무리가 깔끔히 갈라집니다. 이런 비선형 변환을 찾아 쓰는 것이 <b>커널 PCA</b>나 <b>t-SNE</b> 같은 비선형 방법입니다. (이 그림은 거리를 손으로 계산한 아이디어 설명)</div>';}
+$('#ciA').oninput=ciDraw;single('[data-ci]','ci',v=>{ciM=v;ciDraw();});
+const SM=(()=>{const r=rng(9),P=[];for(let i=0;i<200;i++){const k=i%2;const x=3*gauss(r),y=(k?.7:-.7)+.25*gauss(r);const a=.35;P.push([x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a),k]);}return P;})();const SMP=pca(SM.map(p=>[p[0],p[1]]));let smK=1;
+function smDraw(){const{c,w,h}=prep($('#smCv'),.85);const top=h*.6;const g=scatterEq(c,w,top,SM.map(p=>[p[0],p[1]]));SM.forEach(([a,b,k])=>{c.fillStyle=k?CB:CA;c.beginPath();c.arc(g.X(a),g.Y(b),2.6,0,7);c.fill();});
+  const m=mean(SM.map(p=>[p[0],p[1]])),v=SMP.vecs[smK-1],L=smK===1?9:2.2;arrow(c,g.X(m[0]-v[0]*L),g.Y(m[1]-v[1]*L),g.X(m[0]+v[0]*L),g.Y(m[1]+v[1]*L),GO,3);
+  const pr=SM.map(p=>(p[0]-m[0])*v[0]+(p[1]-m[1])*v[1]);const lo=Math.min(...pr),hi=Math.max(...pr);hist(c,14,top+22,w-28,h-top-34,pr,SM.map(p=>p[2]),lo-.01,hi+.01,`PC${smK}만 남긴 값의 분포 (설명 비율 ${f2(SMP.ratio[smK-1]*100,1)}%)`);
+  $('#smMsg').innerHTML=smK===1?`<div class="res r">분산의 <b>${f2(SMP.ratio[0]*100,1)}%</b>를 설명하는 PC1만 남겼더니 두 무리가 <b>뒤섞였습니다</b>. 분산이 크다고 늘 중요한 것은 아닙니다.</div>`:`<div class="res g">겨우 <b>${f2(SMP.ratio[1]*100,1)}%</b>짜리 PC2에 구분 신호가 숨어 있었습니다. 버린 축의 정보는 돌아오지 않으니, 비율만 보고 자르기 전에 <b>무엇을 버리는지</b> 확인하세요.</div>`;}
+single('[data-sm]','sm',v=>{smK=+v;smDraw();});
+quiz('q2','b',ok=>`<div class="res ${ok?'g':'r'}">${ok?'정답!':'아쉬워요.'} 정답은 <b>3</b>. np.mean은 0도 평점 하나로 세어 (5 + 4 + 0) / 3 = <b>3</b>. 진짜 평균 4.5보다 한참 낮습니다 — "안 봤음" 표시가 <b>0점짜리 평가</b>로 바뀐 것. 평가한 칸만 더하고 평가한 개수로 나누세요.</div>`);
+
+/* 평점 */
+const RT=[[4,5,0,1,2],[4,0,5,1,2],[1,2,1,0,3],[5,5,2,3,0],[1,0,1,5,4],[0,1,1,5,5]];let muM='ok',rtA=null;
+function rtCompute(){const mu=RT.map(r=>muM==='ok'?r.filter(v=>v>0).reduce((a,b)=>a+b,0)/r.filter(v=>v>0).length:r.reduce((a,b)=>a+b,0)/r.length);const C=RT.map((r,i)=>r.map(v=>v>0?v-mu[i]:0));const S=svd(C);
+  let u=S.U[0],v=S.V[0];if(v[0]<0){u=u.map(x=>-x);v=v.map(x=>-x);}const A=RT.map((r,i)=>r.map((_,j)=>S.s[0]*u[i]*v[j]+mu[i]));return{mu,A,u,v,s:S.s};}
+function rtDraw(){const R=rtCompute();$('#rtTb').innerHTML=`<thead><tr><th></th>${['액1','액2','액3','로1','로2'].map(x=>`<th>${x}</th>`).join('')}<th>평균</th></tr></thead><tbody>${RT.map((r,i)=>`<tr><th>사용자${i+1}</th>${r.map((v,j)=>v>0?`<td>${v}</td>`:rtA?`<td class="f">${f2(R.A[i][j])}</td>`:'<td class="b">·</td>').join('')}<td style="color:${muM==='ok'?OK:BAD}">${f2(R.mu[i])}</td></tr>`).join('')}</tbody>`;
+  const{c,w,h}=prep($('#rtCv'),.42);if(!rtA){T(c,'버튼을 누르면 영화와 사용자의 잠재 요인(취향 축)이 나타납니다',w/2,h/2,'#5a6b85',11);}else{const L=12,W=w-24,mid=h/2;T(c,'영화의 잠재 요인 (Vᵀ 첫 행)',L,12,MU,10,'left');
+    R.v.forEach((x,j)=>{const bw=W/5;const bh=x*(h/2-28)/.7;c.fillStyle=j<3?CB:PU;c.fillRect(L+j*bw+bw*.25,mid,bw*.5,-bh);T(c,['액1','액2','액3','로1','로2'][j],L+(j+.5)*bw,h-8,j<3?CB:PU,10);T(c,f2(x),L+(j+.5)*bw,mid-bh+(bh>0?-8:8),FG,9);});c.strokeStyle='#5a6b85';c.beginPath();c.moveTo(L,mid);c.lineTo(w-L,mid);c.stroke();}
+  if(!rtA){$('#rtMsg').innerHTML=`<div class="res y">평균 ${muM==='ok'?'= <b>평가한 칸만</b> 더하고 평가한 개수로 나눔':'= <b>np.mean</b> — 빈칸 0까지 세어 모두 낮아짐 (사용자1: 3.00 → 2.40)'}. 사용자마다 후하게·짜게 주는 기준을 맞추려고 각자의 평균을 뺍니다.</div>`;return;}
+  $('#rtMsg').innerHTML=muM==='ok'?`<div class="res g">잠재 요인 하나만 남겨 다시 곱했더니, 액션을 좋아하던 사용자1·2의 빈 액션 칸은 <b>${f2(R.A[0][2],1)}</b>와 <b>${f2(R.A[1][1],1)}</b>, 로맨스를 좋아하던 사용자5·6의 빈 액션 칸은 <b>${f2(R.A[4][1],1)}</b>과 <b>${f2(R.A[5][0],1)}</b>. 장르를 알려 주지 않았는데, 영화 요인이 <b>액션 셋은 한쪽, 로맨스 둘은 반대쪽</b>으로 갈라졌습니다 — 계산이 스스로 찾은 취향의 축.</div>`:`<div class="res r">0을 평점으로 센 평균을 빼면 기준이 처음부터 낮아져, 빈칸이 사용자1·2의 액션 <b>${f2(R.A[0][2])}, ${f2(R.A[1][1])}</b> (올바르게는 ${(()=>{const s=muM;muM='ok';const q=rtCompute();muM=s;return f2(q.A[0][2])+', '+f2(q.A[1][1]);})()})처럼 전체적으로 <b>낮게</b> 채워집니다. 이 차이가 추천 결과 전체를 기울게 만듭니다.</div>`;}
+single('[data-mu]','mu',v=>{muM=v;rtDraw();});$('#rtFill').onclick=()=>{rtA=true;rtDraw();vib([20,30,40]);};$('#rtReset').onclick=()=>{rtA=null;rtDraw();};
+
+/* 나의 예 */
+const MK='pcashadow.mine';let mine=[];try{mine=JSON.parse(localStorage.getItem(MK)||'[]');if(!Array.isArray(mine))mine=[];}catch(e){mine=[];}
+const saveM=()=>{try{localStorage.setItem(MK,JSON.stringify(mine));}catch(e){}};
+function drawMine(){$('#mine').innerHTML=mine.length?mine.map((m,i)=>`<div><span>📐 ${esc(m)}</span><button data-d="${i}" aria-label="지우기">✕</button></div>`).join(''):'<p class="note">숫자의 크기를 믿기 전에 단위부터.</p>';
+  $$('#mine button').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.d,1);saveM();drawMine();});}
+$('#myAdd').onclick=()=>{const v=$('#myIn').value.trim();if(!v)return;mine.unshift(v);mine=mine.slice(0,30);saveM();$('#myIn').value='';drawMine();toast('기록했습니다!');};
+$('#myIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#myAdd').click();});
+
+/* 탭 */
+function redraw(){if(!$('#tab-t1').hidden){hkDraw();shDraw();}if(!$('#tab-t2').hidden){cvDraw();irDraw();}if(!$('#tab-t3').hidden){unDraw();izDraw();}if(!$('#tab-t4').hidden){ciDraw();smDraw();rtDraw();}}
+function show(t){$$('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));['t1','t2','t3','t4'].forEach(k=>$('#tab-'+k).hidden=k!==t);redraw();window.scrollTo(0,0);}
+$$('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(redraw,120);});
+svTable();epDraw();drawMine();redraw();
+})();
+</script>
+</body>
+</html>
